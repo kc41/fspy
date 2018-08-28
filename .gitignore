@@ -1,0 +1,30 @@
+# Temp/local
+temp
+_local
+
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build/Dist
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+
+# Environments
+.env
