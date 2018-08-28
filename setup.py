@@ -33,9 +33,10 @@ setuptools.setup(
     ],
 
     install_requires=[
+        "pytz"
     ],
 
-    packages=setuptools.find_packages(),
+    packages=setuptools.find_packages(exclude=("tests",)),
 
     classifiers=['Private :: Do Not Upload'],
 
