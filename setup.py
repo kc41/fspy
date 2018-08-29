@@ -33,7 +33,10 @@ setuptools.setup(
     ],
 
     install_requires=[
-        "pytz"
+        "pytz",
+        "pydantic",
+        "janus",
+        "aiohttp",
     ],
 
     packages=setuptools.find_packages(exclude=("tests",)),
