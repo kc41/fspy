@@ -1,8 +1,10 @@
+# TODO FIX: Move models to common package
+# TODO CONSIDER: Use named tuples for internal operations and convert to pydantic.BaseModel only during sending
 from typing import (
     Dict, Optional, List,
-    NamedTuple,
 )
 
+from pydantic import BaseModel
 import os
 from os import path
 
@@ -14,21 +16,21 @@ import pytz
 log = logging.getLogger(__name__)
 
 
-class FileState(NamedTuple):
+class FileState(BaseModel):
     path: str
     date_created: datetime
     date_updated: datetime
     size: int
 
 
-class FileDiff(NamedTuple):
+class FileDiff(BaseModel):
     before: FileState = None
     after: FileState = None
 
 
 # TODO CONSIDER: Save two timestamps (start of scan and end of scan)
 # TODO FIX: Use tuples instead of lists
-class FullDiff(NamedTuple):
+class FullDiff(BaseModel):
     timestamp: datetime
 
     created: List[FileState]
