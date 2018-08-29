@@ -17,25 +17,33 @@ class WriteTask(NamedTuple):
     data: Any
 
 
-def _finish_future(fut: asyncio.Future, result):
-    log.info("Closing future %s", fut)
+def _finish_future(fut: asyncio.Future, result: Any):
     fut.set_result(result)
+
+
+def _finish_future_with_exc(fut: asyncio.Future, exc: Exception):
+    fut.set_exception(exc)
 
 
 def _serve_write_queue(q: Queue):
     while True:
+        # noinspection PyBroadException
         try:
-            log.info("Waiting for task in queue")
+            log.debug("Waiting for task in queue")
             task = q.get()  # type: Optional[WriteTask]
-            log.info(f"Task fetched from queue {task}")
+            log.debug(f"Task fetched from queue {task}")
 
             if task is None:
-                log.info("Empty task received. Exiting...")
+                log.debug("Empty task received. Exiting...")
                 break
 
-            time.sleep(1)
+            try:
+                time.sleep(1)
+            except Exception as exc:
+                task.loop.call_soon_threadsafe(_finish_future_with_exc, task.future, exc)
+                continue
 
-            task.loop.call_soon_threadsafe(_finish_future, task.future, "OLOLO")
+            task.loop.call_soon_threadsafe(_finish_future, task.future, None)
 
         except Exception:
             log.exception("Error during serving writing queue")
@@ -63,13 +71,14 @@ class WriteThreadManager:
         await self.task_queue.async_q.put(task)
 
         result = await fut
-        log.info("Get result from worker thread for %s", result)
+        log.debug("Get result from worker thread for %s", result)
 
         return result
 
     async def close(self) -> None:
+        log.info("Sending stop signal to working thread")
         await self.task_queue.async_q.put(None)
-        log.info("Waiting for writing thread")
+        log.info("Waiting for working thread to stop")
 
         # TODO FIX: do not lock main loop!!!
         self.worker_thread.join()

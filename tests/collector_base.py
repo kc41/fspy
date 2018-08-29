@@ -4,6 +4,10 @@ from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
 
 from fspy.collector.logging import init_logging
 from fspy.collector.app import create_application
+from datetime import datetime
+import pytz
+
+from fspy.common.model import DiffReport, FullDiff, DiffReportHandlingResponse
 
 
 class CollectorBaseTests(AioHTTPTestCase):
@@ -17,8 +21,22 @@ class CollectorBaseTests(AioHTTPTestCase):
 
         async with self.client.ws_connect("/ws") as ws:
             for i in range(0, msg_count):
-                await ws.send_str(f"M{i}")
-                await ws.receive()
+                rq = DiffReport(
+                    source_name="test_source",
+                    diff=FullDiff(
+                        timestamp=datetime.now(pytz.utc),
+                        deleted=[],
+                        created=[],
+                        updated=[],
+                    )
+                )
+
+                await ws.send_str(rq.json())
+
+                resp_dict = await ws.receive_json()
+                resp = DiffReportHandlingResponse(**resp_dict)
+
+                self.assertTrue(resp.handled, f"Diff report was not handled. Message: {resp.message}")
 
 
 if __name__ == '__main__':

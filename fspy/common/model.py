@@ -28,3 +28,13 @@ class FullDiff(BaseModel):
 
     def __bool__(self):
         return bool(self.created) or bool(self.deleted) or bool(self.updated)
+
+
+class DiffReport(BaseModel):
+    source_name: str
+    diff: FullDiff
+
+
+class DiffReportHandlingResponse(BaseModel):
+    handled: bool
+    message: str = None
