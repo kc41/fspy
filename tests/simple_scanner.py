@@ -8,7 +8,8 @@ import time
 from tests.util import with_file_structure
 
 # noinspection PyProtectedMember
-from fspy.agent.scanner import SimpleComparator, _file_state_from_file_path, FileDiff
+from fspy.agent.scanner import SimpleComparator, _file_state_from_file_path
+from fspy.common.model import FileDiff
 
 
 class SimpleScanner(unittest.TestCase):

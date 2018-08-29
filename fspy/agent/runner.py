@@ -3,7 +3,8 @@ import asyncio
 import logging
 import logging.config
 
-from fspy.agent.scanner import SimpleComparator, FullDiff
+from fspy.agent.scanner import SimpleComparator
+from fspy.common.model import FullDiff
 from fspy.common_logging import LOG_FMT
 
 log = logging.getLogger(__name__)
