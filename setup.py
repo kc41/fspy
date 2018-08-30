@@ -37,6 +37,8 @@ setuptools.setup(
         "pydantic",
         "janus",
         "aiohttp",
+        "SQLAlchemy==1.2.11",
+        "alembic==1.0.0",
     ],
 
     packages=setuptools.find_packages(exclude=("tests",)),
