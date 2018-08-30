@@ -1,3 +1,4 @@
+import logging
 import logging.config
 
 from fspy.common_logging import LOG_FMT

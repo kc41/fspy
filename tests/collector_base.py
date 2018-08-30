@@ -2,7 +2,7 @@ import unittest
 
 from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
 
-from fspy.collector.logging import init_logging
+from fspy.collector.logging_config import init_logging
 from fspy.collector.app import create_application
 from datetime import datetime
 import pytz
