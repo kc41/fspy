@@ -24,7 +24,9 @@ class CollectorBaseTests(AioHTTPTestCase):
             self.temp_directory.cleanup()
 
     async def get_application(self):
-        init_logging()
+        init_logging(
+            log_sql=True
+        )
 
         db_path = environ.get(
             "FSPY_TESTS_DB_PATH",
