@@ -4,7 +4,7 @@ import weakref
 from aiohttp import web, WSCloseCode
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
-from sqlalchemy.pool import StaticPool
+from sqlalchemy import pool
 
 from fspy.collector import view
 from fspy.collector.db import Base
@@ -39,12 +39,12 @@ async def on_startup(app: web.Application):
 
     log.info("Creating DB engine")
 
-    app_wrapper.db_engine = create_engine(f"sqlite:///{app_wrapper.db_path}", poolclass=StaticPool)
+    app_wrapper.db_engine = create_engine(f"sqlite:///{app_wrapper.db_path}", poolclass=pool.SingletonThreadPool)
 
     await app.loop.run_in_executor(None, run_migrations, app_wrapper.db_engine)
 
     log.info("Running writing thread")
-    app_wrapper.writing_thread_manager.run_worker()
+    app_wrapper.writing_thread_manager.run_worker(app_wrapper.db_engine)
 
     log.info("FSPY startup procedure finished")
 

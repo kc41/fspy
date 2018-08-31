@@ -6,7 +6,11 @@ import janus
 
 import logging
 
-import time
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session
+
+from fspy.collector import db
+from fspy.common import model
 
 log = logging.getLogger(__name__)
 
@@ -25,8 +29,10 @@ def _finish_future_with_exc(fut: asyncio.Future, exc: Exception):
     fut.set_exception(exc)
 
 
-def _serve_write_queue(q: Queue):
+def _serve_write_queue(q: Queue, engine: Engine):
     while True:
+        session = Session(bind=engine)
+
         # noinspection PyBroadException
         try:
             log.debug("Waiting for task in queue")
@@ -38,8 +44,20 @@ def _serve_write_queue(q: Queue):
                 break
 
             try:
-                time.sleep(1)
+                data = task.data
+
+                if isinstance(data, model.DiffReport):
+                    session.add(db.DiffReport(
+                        source_name=data.source_name
+                    ))
+
+                    session.commit()
+
+                else:
+                    raise ValueError(f"Unknown instance type in writing queue: {data}")
+
             except Exception as exc:
+                log.exception("Exception during handling writing task")
                 task.loop.call_soon_threadsafe(_finish_future_with_exc, task.future, exc)
                 continue
 
@@ -54,9 +72,10 @@ class WriteThreadManager:
         self.loop = loop if loop else asyncio.get_event_loop()
         self.task_queue = janus.Queue(loop=self.loop)
 
-        self.worker_thread = threading.Thread(target=_serve_write_queue, args=(self.task_queue.sync_q,))
+        self.worker_thread = None
 
-    def run_worker(self):
+    def run_worker(self, engine: Engine):
+        self.worker_thread = threading.Thread(target=_serve_write_queue, args=(self.task_queue.sync_q, engine,))
         self.worker_thread.start()
 
     async def save(self, data):
