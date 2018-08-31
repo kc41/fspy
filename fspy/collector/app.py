@@ -62,6 +62,7 @@ def create_application(db_path: str):
     log.info("Adding routes")
     app.add_routes([
         web.view("/ws", view.LogsCollectorView),
+        web.view("/flat_report", view.FlatReportView),
     ])
 
     app.on_startup.append(on_startup)

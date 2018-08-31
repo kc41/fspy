@@ -34,6 +34,7 @@ setuptools.setup(
 
     install_requires=[
         "pytz",
+        "tzlocal",
         "pydantic",
         "janus",
         "aiohttp",
