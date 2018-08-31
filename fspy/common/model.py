@@ -17,10 +17,10 @@ class FileDiff(BaseModel):
     after: FileState = None
 
 
-# TODO CONSIDER: Save two timestamps (start of scan and end of scan)
 # TODO FIX: Use tuples instead of lists
 class FullDiff(BaseModel):
-    timestamp: datetime
+    run_start: datetime
+    run_end: datetime
 
     created: List[FileState]
     deleted: List[FileState]

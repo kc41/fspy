@@ -53,12 +53,17 @@ class SimpleComparator:
         return new_snapshot
 
     @staticmethod
-    def get_diff(old: Dict[str, FileState], new: Dict[str, FileState], timestamp=None) -> FullDiff:
-        if timestamp is None:
-            timestamp = datetime.now(pytz.utc)
+    def get_diff(old: Dict[str, FileState], new: Dict[str, FileState],
+                 run_start: datetime = None, run_end: datetime = None) -> FullDiff:
+
+        now = datetime.now(pytz.utc)
+
+        run_start = now if run_start is None else run_start
+        run_end = now if run_end is None else run_end
 
         return FullDiff(
-            timestamp=timestamp,
+            run_start=run_start,
+            run_end=run_end,
 
             created=[new[fn] for fn in new.keys() - old.keys()],
             deleted=[old[fn] for fn in old.keys() - new.keys()],
@@ -75,12 +80,14 @@ class SimpleComparator:
     def scan(self) -> Optional[FullDiff]:
         scan_start = datetime.now(pytz.utc)
         new_snapshot = self.get_snapshot()
+        scan_end = datetime.now(pytz.utc)
 
         if self._ref_snapshot is None:
             self._ref_snapshot = new_snapshot
             return None
 
-        full_diff = self.get_diff(old=self._ref_snapshot, new=new_snapshot, timestamp=scan_start)
+        full_diff = self.get_diff(old=self._ref_snapshot, new=new_snapshot,
+                                  run_start=scan_start, run_end=scan_end)
         self._ref_snapshot = new_snapshot
 
         return full_diff
