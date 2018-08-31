@@ -7,6 +7,7 @@ from functools import wraps
 from pydantic import BaseModel
 
 from aiohttp import web
+from sqlalchemy.engine import Engine
 
 from fspy.collector.writing_thread import WriteThreadManager
 
@@ -18,6 +19,8 @@ class AppWrapper:
 
     KEY_WEB_SOCKETS = "web_sockets"
     KEY_WRITE_THREAD_MANAGER = "write_thread_manager"
+    KEY_DB_ENGINE = "db_engine"
+    KEY_DB_PATH = "db_path"
 
     def __init__(self, app: web.Application):
         self._app = app
@@ -37,6 +40,22 @@ class AppWrapper:
     @writing_thread_manager.setter
     def writing_thread_manager(self, val):
         self._app[self.KEY_WRITE_THREAD_MANAGER] = val
+
+    @property
+    def db_engine(self) -> Engine:
+        return self._app[self.KEY_DB_ENGINE]
+
+    @db_engine.setter
+    def db_engine(self, val: Engine):
+        self._app[self.KEY_DB_ENGINE] = val
+
+    @property
+    def db_path(self) -> str:
+        return self._app[self.KEY_DB_PATH]
+
+    @db_path.setter
+    def db_path(self, val: str):
+        self._app[self.KEY_DB_PATH] = val
 
 
 def marshal_response(*types: Type[BaseModel]):

@@ -1,4 +1,6 @@
 import unittest
+import tempfile
+from os import path
 
 from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
 
@@ -11,9 +13,19 @@ from fspy.common.model import DiffReport, FullDiff, DiffReportHandlingResponse
 
 
 class CollectorBaseTests(AioHTTPTestCase):
+    def setUp(self):
+        self.temp_directory = tempfile.TemporaryDirectory(prefix="fspy-tests")
+        print(self.temp_directory.name)
+        super().setUp()
+
+    def tearDown(self):
+        super().tearDown()
+        if self.temp_directory:
+            self.temp_directory.cleanup()
+
     async def get_application(self):
         init_logging()
-        return create_application()
+        return create_application(path.join(self.temp_directory.name, "fspy-tests.sqlite"))
 
     @unittest_run_loop
     async def test_connect_to_logging_ws(self):

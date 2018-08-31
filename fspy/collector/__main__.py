@@ -11,8 +11,8 @@ from fspy.common import defaults
 log = logging.getLogger(__name__)
 
 
-async def init_app(host: str, port: int) -> web.AppRunner:
-    app = create_application()
+async def init_app(host: str, port: int, db_path: str) -> web.AppRunner:
+    app = create_application(db_path=db_path)
 
     runner = web.AppRunner(app)
     await runner.setup()
@@ -28,8 +28,9 @@ def main():
 
     parser.add_argument("--host", default="0.0.0.0", help="bind address")
     parser.add_argument("--port", default=defaults.DEFAULT_PORT, type=int, help="bind port")
-    parser.add_argument("--db_path", default=":memory:",
-                        help="Path to SQLite DB. If not provided - in-memory DB will be used.")
+    # TODO FIX: create temp file if DB path is not provided
+    parser.add_argument("--db_path",
+                        help="Path to SQLite DB. If not provided temporary file will be created and removed after exit")
 
     args = parser.parse_args()
 
@@ -37,12 +38,10 @@ def main():
 
     log.info(f"Running FSPY server at {args.host}:{args.port}. DB path is: {args.db_path}")
 
-    log.info(f"Running database migrating database")
-
     log.info(f"Preparing HTTP server")
 
     loop = asyncio.get_event_loop()
-    runner = loop.run_until_complete(init_app(args.host, args.port))
+    runner = loop.run_until_complete(init_app(args.host, args.port, args.db_path))
 
     try:
         log.info(f"Running main event loop forever")
