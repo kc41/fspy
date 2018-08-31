@@ -1,6 +1,6 @@
 import unittest
 import tempfile
-from os import path
+from os import path, environ
 
 from aiohttp.test_utils import AioHTTPTestCase, unittest_run_loop
 
@@ -9,7 +9,7 @@ from fspy.collector.app import create_application
 from datetime import datetime
 import pytz
 
-from fspy.common.model import DiffReport, FullDiff, DiffReportHandlingResponse
+from fspy.common.model import DiffReport, FullDiff, DiffReportHandlingResponse, FileState
 
 
 class CollectorBaseTests(AioHTTPTestCase):
@@ -25,20 +25,37 @@ class CollectorBaseTests(AioHTTPTestCase):
 
     async def get_application(self):
         init_logging()
-        return create_application(path.join(self.temp_directory.name, "fspy-tests.sqlite"))
+
+        db_path = environ.get(
+            "FSPY_TESTS_DB_PATH",
+            path.join(self.temp_directory.name, "fspy-tests.sqlite")
+        )
+
+        return create_application(db_path)
 
     @unittest_run_loop
     async def test_connect_to_logging_ws(self):
         msg_count = 10
+        # test_start = datetime.now(pytz.utc)
 
         async with self.client.ws_connect("/ws") as ws:
             for i in range(0, msg_count):
+                now = datetime.now(pytz.utc)
+
                 rq = DiffReport(
                     source_name="test_source",
                     diff=FullDiff(
-                        timestamp=datetime.now(pytz.utc),
+                        run_start=now,
+                        run_end=now,
                         deleted=[],
-                        created=[],
+                        created=[
+                            FileState(
+                                path=f"/var/log/app/{i}.log",
+                                date_created=now,
+                                date_updated=now,
+                                size=512,
+                            )
+                        ],
                         updated=[],
                     )
                 )

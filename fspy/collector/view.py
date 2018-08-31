@@ -47,7 +47,7 @@ class LogsCollectorView(web.View):
 
                     # noinspection PyBroadException
                     try:
-                        await app_w.writing_thread_manager.save(diff_report)
+                        await app_w.writing_thread_manager.save(diff_report, source_ip=self.request.remote)
                         await ws.send_json(self._get_resp_dict(handled=True))
 
                     except Exception:

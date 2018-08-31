@@ -19,6 +19,7 @@ class WriteTask(NamedTuple):
     loop: asyncio.AbstractEventLoop
     future: asyncio.Future
     data: Any
+    source_ip: Optional[str] = None
 
 
 def _finish_future(fut: asyncio.Future, result: Any):
@@ -29,6 +30,7 @@ def _finish_future_with_exc(fut: asyncio.Future, exc: Exception):
     fut.set_exception(exc)
 
 
+# TODO CONSIDER: Test performance with raw SQL calls
 def _serve_write_queue(q: Queue, engine: Engine):
     while True:
         session = Session(bind=engine)
@@ -47,9 +49,8 @@ def _serve_write_queue(q: Queue, engine: Engine):
                 data = task.data
 
                 if isinstance(data, model.DiffReport):
-                    session.add(db.DiffReport(
-                        source_name=data.source_name
-                    ))
+                    db_diff_report = db.diff_report_to_db_model(data, source_ip=task.source_ip)
+                    session.add(db_diff_report)
 
                     session.commit()
 
@@ -78,13 +79,14 @@ class WriteThreadManager:
         self.worker_thread = threading.Thread(target=_serve_write_queue, args=(self.task_queue.sync_q, engine,))
         self.worker_thread.start()
 
-    async def save(self, data):
+    async def save(self, data, source_ip=None):
         fut = self.loop.create_future()
 
         task = WriteTask(
             loop=self.loop,
             future=fut,
             data=data,
+            source_ip=source_ip
         )
 
         await self.task_queue.async_q.put(task)
