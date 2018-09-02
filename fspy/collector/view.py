@@ -142,7 +142,7 @@ class FlatReportView(web.View, GetArgsMixin):
                     size_before=file_diff.size_before,
                     size_after=file_diff.size_after,
 
-                    operation_time=file_diff.operation_time,
+                    operation_time=pytz.utc.localize(file_diff.operation_time),
                 )
                 for file_diff in result
             ]
