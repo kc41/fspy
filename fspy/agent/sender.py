@@ -85,11 +85,11 @@ class DiffSender:
             await self._send_diff(next_diff)
 
     async def close(self):
-        if self._ws:
-            await self._ws.close()
-
         if self._diff_send_task:
             self._diff_send_task.cancel()
+
+        if self._ws:
+            await self._ws.close()
 
         await self._session.close()
 
