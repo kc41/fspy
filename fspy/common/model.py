@@ -17,7 +17,7 @@ class FileDiff(BaseModel):
     after: FileState = None
 
 
-# TODO FIX: Use tuples instead of lists
+# TODO FIX: Use tuples instead of lists (if NamedTuple instead of pydantic)
 class FullDiff(BaseModel):
     run_start: datetime
     run_end: datetime
