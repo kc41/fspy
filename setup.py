@@ -35,9 +35,9 @@ setuptools.setup(
     install_requires=[
         "pytz",
         "tzlocal",
-        "pydantic",
-        "janus",
-        "aiohttp",
+        "pydantic==0.13",
+        "janus==0.4.0",
+        "aiohttp==3.4.1",
         "SQLAlchemy==1.2.11",
         "alembic==1.0.0",
     ],
