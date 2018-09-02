@@ -67,8 +67,7 @@ class LogsCollectorView(web.View, GetArgsMixin):
                         await ws.send_json(self._get_resp_dict(handled=False, message=str(e)))
                         continue
 
-                    # TODO FIX: Improve verbosity
-                    log.info(f"Diff report from {diff_report}")
+                    log.info(f"Diff report from {self.request.remote}/{diff_report.source_name}")
 
                     # noinspection PyBroadException
                     try:
