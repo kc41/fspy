@@ -39,7 +39,6 @@ setuptools.setup(
         "janus==0.4.0",
         "aiohttp==3.4.1",
         "SQLAlchemy==1.2.11",
-        "alembic==1.0.0",
     ],
 
     packages=setuptools.find_packages(exclude=("tests",)),
