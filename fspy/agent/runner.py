@@ -1,19 +1,17 @@
-from typing import Optional
-
 import asyncio
-import aiohttp
 
 import logging
 import logging.config
 
 from fspy.agent.scanner import SimpleComparator
-from fspy.common.model import FullDiff
+from fspy.agent.sender import DiffSender
+from fspy.common import model
 from fspy.common_logging import LOG_FMT
 
 log = logging.getLogger(__name__)
 
 
-def log_full_diff(full_diff: FullDiff):
+def log_full_diff(full_diff: model.FullDiff):
     if log.isEnabledFor(logging.DEBUG) and full_diff:
         for fs in full_diff.created:
             log.debug("File was created: %s", fs)
@@ -26,57 +24,11 @@ def log_full_diff(full_diff: FullDiff):
 class Agent:
     def __init__(self, ws_url: str, scan_target: str, loop: asyncio.AbstractEventLoop):
         self._loop = loop
-        self._scanner = SimpleComparator(scan_target)
-
-        self._ws_url = ws_url
-        self._ws = None
-        self._session = aiohttp.ClientSession(loop=loop)
-
-        self._diff_send_task = None  # type: asyncio.Task
         self._diff_queue = asyncio.Queue(loop=loop)
-
         self._launch_delay = 2
 
-    async def _get_ws(self) -> Optional[aiohttp.ClientWebSocketResponse]:
-        if self._ws is None:
-            log.info("Connecting to web-socket")
-            # noinspection PyBroadException
-            try:
-                self._ws = await self._session.ws_connect(self._ws_url)
-            except Exception:
-                log.exception("Failed to connect to web-socket")
-                return None
-
-        return self._ws
-
-    async def _send_diff_attempt(self, diff) -> bool:
-        ws = await self._get_ws()
-
-        if ws is None:
-            log.warning("Can not get WS. Waiting for next attempt")
-            return False
-
-        # TODO FIX: send diff
-        return True
-
-    async def _send_diff(self, diff, max_attempts=3, attempts_delay=5) -> bool:
-
-        for attempt_num in range(0, max_attempts):
-            success = await self._send_diff_attempt(diff)
-            if success:
-                return True
-
-            await asyncio.sleep(attempts_delay)
-
-        return False
-
-    async def _serve_diff_queue(self):
-        while True:
-            log.debug("Awaiting next diff in queue")
-            next_diff = await self._diff_queue.get()
-
-            log.debug("Diff received from queue")
-            await self._send_diff(next_diff)
+        self._scanner = SimpleComparator(scan_target)
+        self._diff_sender = DiffSender(ws_url=ws_url, diff_queue=self._diff_queue, loop=loop)
 
     # TODO FIX: use single thread executor to totally prevent parallel launches of SimpleComparator
     async def _collect_diff(self):
@@ -101,19 +53,11 @@ class Agent:
             log.exception("Exception during diff collection")
 
     async def close(self):
-        if self._ws:
-            await self._ws.close()
-
-        if self._diff_send_task:
-            self._diff_send_task.cancel()
-
-        await self._session.close()
+        await self._diff_sender.close()
 
     async def run(self):
-        # Initial attempt to connect
-        await self._get_ws()
-        log.info("Running diff send task")
-        self._diff_send_task = asyncio.ensure_future(self._serve_diff_queue(), loop=self._loop)
+        log.info("Running diff sender")
+        await self._diff_sender.run()
 
         log.info("Starting infinite directory scanning")
         while True:
@@ -144,6 +88,9 @@ def main(scan_target: str, ws_url: str):
                 'level': 'INFO',
             },
             'fspy.agent.runner': {
+                'level': 'ERROR',
+            },
+            'fspy.agent.sender': {
                 'level': 'DEBUG',
             }
         },
