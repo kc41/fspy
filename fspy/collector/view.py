@@ -1,6 +1,8 @@
 from typing import Optional, List
 
 import logging
+
+import pytz
 from aiohttp import web
 
 import pydantic
@@ -110,8 +112,8 @@ class FlatReportView(web.View, GetArgsMixin):
             db.FileDiff.diff_report
         ).filter(
             and_(
-                db.FileDiff.operation_time <= args.date_end,
-                db.FileDiff.operation_time >= args.date_start
+                db.FileDiff.operation_time <= args.date_end.astimezone(pytz.utc),
+                db.FileDiff.operation_time >= args.date_start.astimezone(pytz.utc)
             )
         )
 
