@@ -1,6 +1,7 @@
 # Temp/local
 temp
 _local
+tests/develop.py
 
 # IntelliJ project files
 .idea
