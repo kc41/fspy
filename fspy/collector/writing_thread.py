@@ -99,7 +99,7 @@ class WriteThreadManager:
     async def close(self) -> None:
         log.info("Sending stop signal to working thread")
         await self.task_queue.async_q.put(None)
-        log.info("Waiting for working thread to stop")
 
-        # TODO FIX: do not lock main loop!!!
-        self.worker_thread.join()
+        log.info("Waiting for working thread to stop")
+        await self.loop.run_in_executor(None, self.worker_thread.join)
+        log.info("Working working thread was stopped")

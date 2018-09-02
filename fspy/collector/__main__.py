@@ -28,9 +28,7 @@ def main():
 
     parser.add_argument("--host", default="0.0.0.0", help="bind address")
     parser.add_argument("--port", default=defaults.DEFAULT_PORT, type=int, help="bind port")
-    # TODO FIX: create temp file if DB path is not provided
-    parser.add_argument("--db_path",
-                        help="Path to SQLite DB. If not provided temporary file will be created and removed after exit")
+    parser.add_argument("--db_path", help="Path to SQLite DB. If does not exists - will be created", required=True)
 
     args = parser.parse_args()
 
