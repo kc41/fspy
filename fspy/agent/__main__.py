@@ -6,7 +6,7 @@ import logging.config
 
 import argparse
 
-from fspy.common_logging import LOG_FMT
+from fspy.common.logging_config import LOG_FMT
 
 
 def main():

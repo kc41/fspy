@@ -1,7 +1,7 @@
 import logging
 import logging.config
 
-from fspy.common_logging import LOG_FMT
+from fspy.common.logging_config import LOG_FMT
 
 
 def init_logging(log_sql=False, terminal_only=True):
