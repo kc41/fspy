@@ -6,7 +6,6 @@ import logging.config
 from fspy.agent.scanner import SimpleComparator
 from fspy.agent.sender import DiffSender
 from fspy.common import model
-from fspy.common_logging import LOG_FMT
 
 log = logging.getLogger(__name__)
 
@@ -34,9 +33,9 @@ class Agent:
     async def _collect_diff(self):
         # noinspection PyBroadException
         try:
-            log.info("Running directory scan")
+            log.debug("Running directory scan")
             full_diff = await self._loop.run_in_executor(None, self._scanner.scan)
-            log.info("Directory scan finished")
+            log.debug("Directory scan finished")
 
             if full_diff:
                 log.info(f"FS changes detected "
@@ -47,7 +46,7 @@ class Agent:
 
                 await self._diff_queue.put(full_diff)
             else:
-                log.info("No FS changes was detected")
+                log.debug("No FS changes was detected")
 
         except Exception:
             log.exception("Exception during diff collection")
@@ -66,39 +65,9 @@ class Agent:
 
 
 def main(scan_target: str, ws_url: str):
-    logging.config.dictConfig({
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'default': {
-                'class': 'logging.Formatter',
-                'format': LOG_FMT
-            }
-        },
-        'handlers': {
-            'console': {
-                'level': 'DEBUG',
-                'class': 'logging.StreamHandler',
-                'formatter': 'default'
-            },
-        },
-        'loggers': {
-            '': {
-                'handlers': ['console'],
-                'level': 'INFO',
-            },
-            'fspy.agent.runner': {
-                'level': 'ERROR',
-            },
-            'fspy.agent.sender': {
-                'level': 'DEBUG',
-            }
-        },
-    })
-
     loop = asyncio.get_event_loop()
 
-    log.info("Client app start")
+    log.info(f"Client app start. Scan directory: {scan_target}. Server WS URL: {ws_url}")
 
     agent = Agent(
         ws_url=ws_url,

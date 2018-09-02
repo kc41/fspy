@@ -1,7 +1,12 @@
 from os import path
 from fspy.agent import runner
 from fspy.common import defaults
+
+import logging.config
+
 import argparse
+
+from fspy.common_logging import LOG_FMT
 
 
 def main():
@@ -18,6 +23,42 @@ def main():
 
     if not path.isdir(target):
         print(f"{target} is not a directory")
+
+    logging.config.dictConfig({
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'default': {
+                'class': 'logging.Formatter',
+                'format': LOG_FMT
+            }
+        },
+        'handlers': {
+            'console': {
+                'level': 'DEBUG',
+                'class': 'logging.StreamHandler',
+                'formatter': 'default'
+            },
+        },
+        'loggers': {
+            '': {
+                'handlers': ['console'],
+                'level': 'INFO',
+            },
+            '__main__': {
+                'level': 'INFO',
+            },
+            'fspy.agent.runner': {
+                'level': 'INFO',
+            },
+            'fspy.agent.scanner': {
+                'level': 'INFO',
+            },
+            'fspy.agent.sender': {
+                'level': 'INFO',
+            }
+        },
+    })
 
     runner.main(ws_url=ws_url, scan_target=target)
 

@@ -74,15 +74,18 @@ class DiffSender:
         return False
 
     async def _serve_diff_queue(self):
-        # Initial attempt to connect
-        await self._get_ws()
+        try:
+            # Initial attempt to connect
+            await self._get_ws()
 
-        while True:
-            log.debug("Awaiting next diff in queue")
-            next_diff = await self._diff_queue.get()
+            while True:
+                log.debug("Awaiting next diff in queue")
+                next_diff = await self._diff_queue.get()
 
-            log.debug("Diff received from queue")
-            await self._send_diff(next_diff)
+                log.info("Trying to send to server diff from queue")
+                await self._send_diff(next_diff)
+        except asyncio.CancelledError:
+            log.info("Diff queue serving was canceled")
 
     async def close(self):
         if self._diff_send_task:
