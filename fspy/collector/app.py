@@ -5,9 +5,11 @@ from aiohttp import web, WSCloseCode
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy import pool
+import asyncio
 
 from fspy.collector import view
 from fspy.collector.db import Base
+from fspy.collector.terminal import diff_report_printer
 from fspy.collector.utils import AppWrapper
 from fspy.collector.writing_thread import WriteThreadManager
 
@@ -29,6 +31,8 @@ async def on_shutdown(app: web.Application):
 
     await app_wrapper.writing_thread_manager.close()
 
+    app_wrapper.terminal_task.cancel()
+
     log.info("On shutdown procedure finished")
 
 
@@ -45,6 +49,10 @@ async def on_startup(app: web.Application):
 
     log.info("Running writing thread")
     app_wrapper.writing_thread_manager.run_worker(app_wrapper.db_engine)
+
+    log.info("Initiating terminal task")
+    app_wrapper.terminal_queue = asyncio.Queue()
+    app_wrapper.terminal_task = asyncio.ensure_future(diff_report_printer(app_wrapper.terminal_queue), loop=app.loop)
 
     log.info("FSPY startup procedure finished")
 

@@ -29,10 +29,11 @@ def main():
     parser.add_argument("--host", default="0.0.0.0", help="bind address")
     parser.add_argument("--port", default=defaults.DEFAULT_PORT, type=int, help="bind port")
     parser.add_argument("--db_path", help="Path to SQLite DB. If does not exists - will be created", required=True)
+    parser.add_argument("--verbose", help="Verbose logging", action='store_true')
 
     args = parser.parse_args()
 
-    logging_config.init_logging()
+    logging_config.init_logging(terminal_only=not args.verbose)
 
     log.info(f"Running FSPY server at {args.host}:{args.port}. DB path is: {args.db_path}")
 

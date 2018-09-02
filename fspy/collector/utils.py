@@ -10,6 +10,7 @@ from aiohttp import web
 from sqlalchemy.engine import Engine
 
 from fspy.collector.writing_thread import WriteThreadManager
+import asyncio
 
 log = logging.getLogger(__name__)
 
@@ -21,6 +22,8 @@ class AppWrapper:
     KEY_WRITE_THREAD_MANAGER = "write_thread_manager"
     KEY_DB_ENGINE = "db_engine"
     KEY_DB_PATH = "db_path"
+    KEY_TERMINAL_TASK = "terminal_task"
+    KEY_TERMINAL_QUEUE = "terminal_queue"
 
     def __init__(self, app: web.Application):
         self._app = app
@@ -56,6 +59,22 @@ class AppWrapper:
     @db_path.setter
     def db_path(self, val: str):
         self._app[self.KEY_DB_PATH] = val
+
+    @property
+    def terminal_task(self) -> asyncio.Task:
+        return self._app[self.KEY_TERMINAL_TASK]
+
+    @terminal_task.setter
+    def terminal_task(self, val: asyncio.Task):
+        self._app[self.KEY_TERMINAL_TASK] = val
+
+    @property
+    def terminal_queue(self) -> asyncio.Queue:
+        return self._app[self.KEY_TERMINAL_QUEUE]
+
+    @terminal_queue.setter
+    def terminal_queue(self, val: asyncio.Queue):
+        self._app[self.KEY_TERMINAL_QUEUE] = val
 
 
 def marshal_response(*types: Type[BaseModel]):

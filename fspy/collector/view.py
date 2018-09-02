@@ -72,6 +72,7 @@ class LogsCollectorView(web.View, GetArgsMixin):
 
                     # noinspection PyBroadException
                     try:
+                        app_w.terminal_queue.put_nowait(diff_report)
                         await app_w.writing_thread_manager.save(diff_report, source_ip=self.request.remote)
                         await ws.send_json(self._get_resp_dict(handled=True))
 
