@@ -38,28 +38,26 @@ class CollectorBaseTests(AioHTTPTestCase):
     @unittest_run_loop
     async def test_connect_to_logging_ws(self):
         msg_count = 10
+        source_name = "test_source"
         # test_start = datetime.now(pytz.utc)
 
-        async with self.client.ws_connect("/ws") as ws:
+        async with self.client.ws_connect(f"/ws?source_name={source_name}") as ws:
             for i in range(0, msg_count):
                 now = datetime.now(pytz.utc)
 
-                rq = DiffReport(
-                    source_name="test_source",
-                    diff=FullDiff(
-                        run_start=now,
-                        run_end=now,
-                        deleted=[],
-                        created=[
-                            FileState(
-                                path=f"/var/log/app/{i}.log",
-                                date_created=now,
-                                date_updated=now,
-                                size=512,
-                            )
-                        ],
-                        updated=[],
-                    )
+                rq = FullDiff(
+                    run_start=now,
+                    run_end=now,
+                    deleted=[],
+                    created=[
+                        FileState(
+                            path=f"/var/log/app/{i}.log",
+                            date_created=now,
+                            date_updated=now,
+                            size=512,
+                        )
+                    ],
+                    updated=[],
                 )
 
                 await ws.send_str(rq.json())

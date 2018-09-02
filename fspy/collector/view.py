@@ -14,18 +14,31 @@ from sqlalchemy.orm import Session, joinedload
 
 from fspy.collector import db, schemas
 from fspy.collector.utils import AppWrapper
-from fspy.common.model import DiffReportHandlingResponse, DiffReport
+from fspy.common.model import DiffReportHandlingResponse, DiffReport, FullDiff
 
 log = logging.getLogger(__name__)
 
 
-class LogsCollectorView(web.View):
+# noinspection PyUnresolvedReferences
+class GetArgsMixin:
+    def parse_arg(self):
+        try:
+            return self.GetArgs(**dict(self.request.rel_url.query))
+        except pydantic.ValidationError as e:
+            raise web.HTTPBadRequest(content_type='application/json', body=e.json())
+
+
+class LogsCollectorView(web.View, GetArgsMixin):
+    class GetArgs(pydantic.BaseModel):
+        source_name: str
 
     @staticmethod
     def _get_resp_dict(handled=True, message=None):
         return DiffReportHandlingResponse(handled=handled, message=message).dict()
 
     async def get(self):
+        args = self.parse_arg()  # type: self.GetArgs
+
         app_w = AppWrapper(self.request.app)
 
         log.info(f"Handling new WS connection from {self.request.remote}")
@@ -39,7 +52,10 @@ class LogsCollectorView(web.View):
                 if msg.type == web.WSMsgType.TEXT:
                     try:
                         msg_dict = json.loads(msg.data)
-                        diff_report = DiffReport(**msg_dict)
+                        diff_report = DiffReport(
+                            source_name=args.source_name,
+                            diff=FullDiff(**msg_dict)
+                        )
                     except json.JSONDecodeError:
                         log.warning(f"Can not decode message from {self.request.remote}: {msg.data}")
 
@@ -71,7 +87,7 @@ class LogsCollectorView(web.View):
         return ws
 
 
-class FlatReportView(web.View):
+class FlatReportView(web.View, GetArgsMixin):
     class GetArgs(pydantic.BaseModel):
         date_start: datetime
         date_end: datetime
@@ -131,11 +147,11 @@ class FlatReportView(web.View):
         )
 
     async def get(self):
-        args = self.GetArgs(**dict(self.request.rel_url.query))
+        args = self.parse_arg()  # type: self.GetArgs
 
         loop = self.request.app.loop
 
         # TODO FIX: Use explicit thread pool executor
         report = await loop.run_in_executor(None, self.sync_get, args)
 
-        return web.json_response(report)
+        return web.json_response(text=report.json())
