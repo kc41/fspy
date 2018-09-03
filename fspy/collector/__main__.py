@@ -1,6 +1,7 @@
 import logging
 import asyncio
 
+import sys
 from argparse import ArgumentParser
 from aiohttp import web
 
@@ -15,12 +16,19 @@ async def init_app(host: str, port: int, db_path: str) -> web.AppRunner:
     app = create_application(db_path=db_path)
 
     runner = web.AppRunner(app)
-    await runner.setup()
 
-    site = web.TCPSite(runner, host, port)
-    await site.start()
+    try:
+        await runner.setup()
 
-    return runner
+        site = web.TCPSite(runner, host, port)
+        await site.start()
+
+        return runner
+
+    except Exception as e:
+        log.error("Exception during app start-up. Shutting application down...")
+        await app.shutdown()
+        raise e
 
 
 def main():
@@ -40,14 +48,27 @@ def main():
     log.info(f"Preparing HTTP server")
 
     loop = asyncio.get_event_loop()
-    runner = loop.run_until_complete(init_app(args.host, args.port, args.db_path))
+
+    try:
+        runner = loop.run_until_complete(init_app(args.host, args.port, args.db_path))
+    except KeyboardInterrupt:
+        log.info("Interrupt signal received during initialization")
+        loop.close()
+        sys.exit(-1)
+    except Exception as e:
+        log.exception(e)
+        loop.close()
+        sys.exit(-1)
 
     try:
         log.info(f"Running main event loop forever")
         loop.run_forever()
     except KeyboardInterrupt:
+        pass
+    finally:
         log.info("Interrupt signal received")
         loop.run_until_complete(runner.cleanup())
+        loop.close()
 
 
 if __name__ == '__main__':
